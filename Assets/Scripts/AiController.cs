@@ -1,30 +1,71 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using Random = UnityEngine.Random;
 
 public class AiController : MonoBehaviour
 {
     private NavMeshAgent _navMeshAgent;
 
     public float timer, WanderTime;
+    public Transform otherPlayer;
+
+    public enum State
+    {
+        FindCharacter,
+        Wander,
+        Idle
+    }
+
+    private State currentState;
     // Start is called before the first frame update
     void Start()
     {
         _navMeshAgent = GetComponent<NavMeshAgent>();
+        currentState = State.FindCharacter;
     }
 
     // Update is called once per frame
     void Update()
     {
+        switch (currentState)
+        {
+            case State.FindCharacter:
+
+                SetAiTargetLocation(otherPlayer.position);
+
+                if (_navMeshAgent.remainingDistance < 1f && _navMeshAgent.remainingDistance >0.5f)
+                {
+                    currentState = State.Wander;
+                }
+
+                break;
+
+            case State.Wander:
+                timer += Time.deltaTime;
+                Wander();
+
+                break;
+
+
+            case State.Idle:
+                SetAiTargetLocation(transform.position);
+
+                break;
+
+        }
+
         if (Input.GetMouseButtonDown(0))
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray,out RaycastHit hit))
-            SetAiTargetLocation(hit.point);
+            if (Physics.Raycast(ray, out RaycastHit hit))
+            {
+                //SetAiTargetLocation(hit.point);
+            }
         }
-        timer += Time.deltaTime;
-        Wander();
+        
     }
 
     private void SetAiTargetLocation(Vector3 targetLocation)
@@ -42,6 +83,11 @@ public class AiController : MonoBehaviour
             SetAiTargetLocation(wanderPos3D);
             timer = 0;
         }
+    }
+
+    public void SetState(string newState)
+    {
+        currentState = (State) Enum.Parse(typeof(State), newState);
     }
 
 }
